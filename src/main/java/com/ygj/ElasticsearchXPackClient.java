@@ -26,6 +26,8 @@ public class ElasticsearchXPackClient {
 
     protected RestHighLevelClient client;
 
+    private String hello;
+
     public void setUp() throws Exception {
         RestClientBuilder restClientBuilder = RestClient.builder(new HttpHost("es-dev01.yingzi.com", 9200, "http"),
                 new HttpHost("es-dev02.yingzi.com", 9200, "http"),
