@@ -5,6 +5,8 @@ import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.CredentialsProvider;
 import org.apache.http.impl.client.BasicCredentialsProvider;
+import org.elasticsearch.action.index.IndexRequest;
+import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.RequestOptions;
@@ -12,6 +14,7 @@ import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestClientBuilder;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.common.unit.TimeValue;
+import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.slf4j.Logger;
@@ -28,7 +31,7 @@ public class ElasticsearchXPackClient {
 
     private String hello;
 
-    public void setUp() throws Exception {
+    public void init() throws Exception {
         RestClientBuilder restClientBuilder = RestClient.builder(new HttpHost("es-dev01.yingzi.com", 9200, "http"),
                 new HttpHost("es-dev02.yingzi.com", 9200, "http"),
                 new HttpHost("es-dev03.yingzi.com", 9200, "http"));
@@ -43,8 +46,15 @@ public class ElasticsearchXPackClient {
 
     public static void main(String[] args) throws Exception {
         ElasticsearchXPackClient elasticsearchXPackClient = new ElasticsearchXPackClient();
-        elasticsearchXPackClient.setUp();
+        elasticsearchXPackClient.init();
         elasticsearchXPackClient.searchInfo();
+        String jsonString = "{" +
+                "\"user\":\"kimchy\"," +
+                "\"postDate\":\"2013-01-30\"," +
+                "\"message\":\"trying out Elasticsearch\"" +
+                "}";
+        elasticsearchXPackClient.insertData("bak_test", jsonString);
+        elasticsearchXPackClient.close();
     }
 
     public void searchInfo() throws IOException {
@@ -58,6 +68,13 @@ public class ElasticsearchXPackClient {
         searchRequest.source(sourceBuilder);
         SearchResponse response = client.search(searchRequest, RequestOptions.DEFAULT);
         System.out.println(response.getHits().getTotalHits());
+    }
+
+    public void insertData(String indexName, String jsonString) throws IOException {
+        IndexRequest request = new IndexRequest(indexName,"doc");
+        request.source(jsonString, XContentType.JSON);
+        IndexResponse indexResponse = client.index(request, RequestOptions.DEFAULT);
+        log.info("es result:{1}", indexResponse.toString());
     }
 
     public void close() throws Exception {
